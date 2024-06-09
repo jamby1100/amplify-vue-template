@@ -27,7 +27,7 @@ function createTodo() {
   });
 }
 
-function createComment(todoId) {
+function createComment(todoId: string) {
   client.models.Comment.create({
     content: window.prompt("Todo content"),
     createdAt: new Date(),

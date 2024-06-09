@@ -19,7 +19,8 @@ const schema = a.schema({
     .model({
       id: a.id(),
       todo_parent_id: a.integer(),
-      createdAt: a.datetime()
+      createdAt: a.datetime(),
+      content: a.string()
     })
     .authorization(allow => [allow.owner()]),
 });

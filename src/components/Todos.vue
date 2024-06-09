@@ -19,11 +19,20 @@ function listTodos() {
 
 function createTodo() {
   client.models.Todo.create({
-    content: window.prompt("Todo content")
+    content: window.prompt("Todo content"),
+    createdAt: new Date()
   }).then(() => {
     // After creating a new todo, update the list of todos
     listTodos();
   });
+}
+
+function createComment(todoId) {
+  client.models.Comment.create({
+    content: window.prompt("Todo content"),
+    createdAt: new Date(),
+    todo_parent_id: todoId
+  })
 }
 
   
@@ -48,7 +57,8 @@ function deleteTodo(id: string) {
         :key="todo.id"
         @click="deleteTodo(todo.id)"
       >
-        {{ todo.content }}
+        {{ todo.id }} - {{ todo.content }}
+        <button @click="createComment(todo.id)">+ new comment</button>
       </li>
     </ul>
     <div>
@@ -57,6 +67,7 @@ function deleteTodo(id: string) {
       <a href="https://docs.amplify.aws/gen2/start/quickstart/nextjs-pages-router/">
         Review next steps of this tutorial.
       </a>
+      
     </div>
   </main>
 </template>

@@ -10,8 +10,18 @@ const schema = a.schema({
   Todo: a
     .model({
       content: a.string(),
+      createdAt: a.datetime(),
+      id: a.id()
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    // .authorization((allow) => [allow.publicApiKey()]),
+    .authorization(allow => [allow.owner()]),
+  Comment: a
+    .model({
+      id: a.id(),
+      todo_parent_id: a.integer(),
+      createdAt: a.datetime()
+    })
+    .authorization(allow => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -19,11 +29,13 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: "apiKey",
-    // API Key is used for a.allow.public() rules
+    
     apiKeyAuthorizationMode: {
       expiresInDays: 30,
     },
+    // API Key is used for a.allow.public() rules
+    // defaultAuthorizationMode: "apiKey",
+    defaultAuthorizationMode: 'userPool',
   },
 });
 

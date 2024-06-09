@@ -3,6 +3,9 @@ import '@/assets/main.css';
 import { onMounted, ref } from 'vue';
 import type { Schema } from '../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/data';
+import { get } from 'aws-amplify/api';
+
+// import { todo } from 'node:test';
 
 const client = generateClient<Schema>();
 
@@ -17,6 +20,20 @@ function listTodos() {
   }); 
 }
 
+
+async function getItem() {
+  try {
+    const restOperation = get({ 
+      apiName: 'goldenRestApi',
+      path: 'items' 
+    });
+    const response = await restOperation.response;
+    console.log('GET call succeeded: ', response);
+  } catch (error) {
+    console.log('GET call failed: ', JSON.parse(error.response.body));
+  }
+}
+
 function createTodo() {
   client.models.Todo.create({
     content: window.prompt("Todo content"),
@@ -28,6 +45,8 @@ function createTodo() {
 }
 
 function createComment(todoId: string) {
+  console.log("COMMENT ID");
+  console.log(todoId);
   client.models.Comment.create({
     content: window.prompt("Todo content"),
     createdAt: new Date(),
@@ -43,6 +62,7 @@ function deleteTodo(id: string) {
 // fetch todos when the component is mounted
  onMounted(() => {
   listTodos();
+  getItem();
 });
 
 </script>
@@ -55,10 +75,10 @@ function deleteTodo(id: string) {
       <li 
         v-for="todo in todos" 
         :key="todo.id"
-        @click="deleteTodo(todo.id)"
       >
         {{ todo.id }} - {{ todo.content }}
         <button @click="createComment(todo.id)">+ new comment</button>
+        <button @click="deleteTodo(todo.id)">- del</button>
       </li>
     </ul>
     <div>

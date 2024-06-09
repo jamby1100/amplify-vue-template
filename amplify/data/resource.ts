@@ -18,7 +18,7 @@ const schema = a.schema({
   Comment: a
     .model({
       id: a.id(),
-      todo_parent_id: a.integer(),
+      todo_parent_id: a.string(),
       createdAt: a.datetime(),
       content: a.string()
     })

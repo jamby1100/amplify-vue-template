@@ -17,6 +17,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       "Access-Control-Allow-Origin": "*", // Restrict this to domains you trust
       "Access-Control-Allow-Headers": "*", // Specify only the headers you need to allow
     },
-    body: JSON.stringify("Hello from myFunction!"),
+    body: JSON.stringify("Hello from the other side!"),
+
   };
 };

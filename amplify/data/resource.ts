@@ -20,8 +20,10 @@ const schema = a.schema({
       id: a.id(),
       todo_parent_id: a.string(),
       createdAt: a.datetime(),
-      content: a.string()
+      content: a.string(),
+      likesCount: a.integer()
     })
+    .secondaryIndexes((index) => [index("todo_parent_id")])
     .authorization(allow => [allow.owner()]),
 });
 

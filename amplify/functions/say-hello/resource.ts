@@ -7,8 +7,9 @@ export const sayHello = defineFunction({
   entry: './handler.ts',
   environment: {
     NAME: "World",
-    SOME_VAR: "nice"
+    SOME_VAR: "nice",
+    SOMETHING: "hey"
   },
-  timeoutSeconds: 60, // 1 minute timeout
+  timeoutSeconds: 900, // 1 minute timeout
   memoryMB: 256 // allocate 256 MB of memory to the function.
 });

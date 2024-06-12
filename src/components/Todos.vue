@@ -3,7 +3,8 @@ import '@/assets/main.css';
 import { onMounted, ref } from 'vue';
 import type { Schema } from '../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/data';
-import { get } from 'aws-amplify/api';
+import { post } from 'aws-amplify/api';
+import { uploadData } from "aws-amplify/storage";
 
 // import { todo } from 'node:test';
 
@@ -21,18 +22,7 @@ function listTodos() {
 }
 
 
-async function getItem() {
-  try {
-    const restOperation = get({ 
-      apiName: 'goldenRestApi',
-      path: 'items' 
-    });
-    const response = await restOperation.response;
-    console.log('GET call succeeded: ', response);
-  } catch (error) {
-    console.log('GET call failed: ', JSON.parse(error.response.body));
-  }
-}
+
 
 // interface CommentData {
 //   data: Array<Object>
@@ -92,8 +82,48 @@ async function deleteTodo(id: string) {
 // fetch todos when the component is mounted
  onMounted(() => {
   listTodos();
-  getItem();
 });
+
+async function createAttachmentForTask(postBody: Object) {
+  try {
+    const restOperation = post({
+      apiName: 'goldenRestApi',
+      path: 'items',
+      options: {
+        body: postBody
+      }
+    });
+
+    const response = await restOperation.response;
+    console.log('POST call succeeded: ', response);
+  } catch (error) {
+    console.log('POST call failed: ', JSON.parse(error.response.body));
+  }
+}
+
+// const file = document.getElementById("file");
+// const upload = document.getElementById("upload");
+
+// upload.addEventListener("click", () => {
+async function uploadFile(todoId) {
+  const fileReader = new FileReader();
+  fileReader.readAsArrayBuffer(file.files[0]);
+  const imagePath = "picture-submissions/" + file.files[0].name
+
+  fileReader.onload = async (event) => {
+    console.log("Complete File read successfully!", event.target.result);
+    try {
+      await uploadData({
+          data: event.target.result, 
+          path: imagePath,
+      })
+    } catch (e) {
+      console.log("error", e);
+    }
+  }
+  
+  let result = await createAttachmentForTask({"imagePath": imagePath, "todoId": todoId})
+};
 
 
 
@@ -112,6 +142,14 @@ async function deleteTodo(id: string) {
         <button @click="createComment(todo.id)">+ new comment</button>
         <button @click="deleteTodo(todo.id)">- del</button>
         <button @click="showCommentsV2(todo.id)">comments</button>
+
+        <div class="">
+          <input
+            type="file"
+            id="file"
+          />
+          <button id="upload" @click="uploadFile(todo.id)">Upload File</button>
+      </div>
       </li>
     </ul>
 
@@ -122,6 +160,9 @@ async function deleteTodo(id: string) {
         {{commentBody.content}}
       </li>
     </ul>
+
+
+
     <div>
       🥳 App successfully hosted. Try creating a new todo.
       <br />
@@ -130,5 +171,6 @@ async function deleteTodo(id: string) {
       </a>
   
     </div>
+
   </main>
 </template>

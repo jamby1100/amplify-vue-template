@@ -1,4 +1,5 @@
-import { defineFunction } from '@aws-amplify/backend';
+import { defineFunction, secret } from '@aws-amplify/backend';
+// import { StringParameter } from '@aws-amplify/ssm'
 
 export const sayHello = defineFunction({
   // optionally specify a name for the Function (defaults to directory name)
@@ -8,7 +9,8 @@ export const sayHello = defineFunction({
   environment: {
     NAME: "World",
     SOME_VAR: "nice",
-    SOMETHING: "hey"
+    SOMETHING: "hey",
+    DYNAMODB_TABLE_NAME_MASTER: ""
   },
   timeoutSeconds: 900, // 1 minute timeout
   memoryMB: 256 // allocate 256 MB of memory to the function.

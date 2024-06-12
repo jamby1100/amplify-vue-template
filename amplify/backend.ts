@@ -4,6 +4,9 @@ import { data } from './data/resource';
 import { sayHello } from './functions/say-hello/resource';
 import { Stack } from "aws-cdk-lib";
 import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { storage } from './storage/resource';
+import { Table, AttributeType } from "aws-cdk-lib/aws-dynamodb"
+import { StringParameter } from "aws-cdk-lib/aws-ssm"
 
 import {
   AuthorizationType,
@@ -13,14 +16,35 @@ import {
   RestApi,
 } from "aws-cdk-lib/aws-apigateway";
 
+import { Function } from 'aws-cdk-lib/aws-lambda';
+
+
 const backend = defineBackend({
   auth,
   data,
   sayHello,
+  storage
 });
+
+
 
 // create a new API stack
 const apiStack = backend.createStack("api-stack");
+
+
+const table = new Table(apiStack, 'AttachmentTable12345', {
+  partitionKey: {
+    name: 'id',
+    type: AttributeType.STRING,
+  }
+});
+
+const lambdaFunction = backend.sayHello.resources.lambda as Function;
+lambdaFunction.addEnvironment('DYNAMODB_TABLE_NAME_MASTER', 'AttachmentTable12345');
+
+
+
+
 
 // create a new REST API
 const myRestApi = new RestApi(apiStack, "RestApi", {
@@ -40,6 +64,12 @@ const myRestApi = new RestApi(apiStack, "RestApi", {
 const lambdaIntegration = new LambdaIntegration(
   backend.sayHello.resources.lambda
 );
+
+
+// const param = new StringParameter(apiStack, 'param1', {parameterName: "ATTACHMENTS_TABLE", stringValue: "AttachmentTable12345"})
+// backend.sayHello.resources.cfnResources.cfnFunction.addOverride("Environment.ATTACHMENTS_TABLE","SomeHeart")
+
+
 
 // create a new resource path with IAM authorization
 const itemsPath = myRestApi.root.addResource("items", {

@@ -23,16 +23,18 @@ function listTodos() {
 }
 
 
+interface CommentContent {
+  content: string
+}
 
-
-// interface CommentData {
-//   data: Array<Object>
-// }
+interface CommentData {
+  data: Array<CommentContent>
+}
 // const todos = ref<Array<Schema['Todo']["type"]>>([]);
 // const currentId = ref<String>
 
 // let currentId: string;
-let commentData = ref({})
+let commentData:any = ref({})
 const currentId = ref("")
 
 async function showCommentsV2(todoId: string) {
@@ -93,7 +95,7 @@ async function showPhotoAttachmentsV2(todoId: string) {
 function createTodo() {
   client.models.Todo.create({
     content: window.prompt("Todo content"),
-    createdAt: new Date()
+    createdAt: new Date().toDateString()
   }).then(() => {
     // After creating a new todo, update the list of todos
     listTodos();
@@ -105,7 +107,7 @@ async function createComment(todoId: string) {
   console.log(todoId);
   await client.models.Comment.create({
     content: window.prompt("Todo content"),
-    createdAt: new Date(),
+    createdAt: new Date().toDateString(),
     todo_parent_id: todoId
   })
   await showCommentsV2(todoId);
@@ -122,7 +124,7 @@ async function deleteTodo(id: string) {
   listTodos();
 });
 
-async function createAttachmentForTask(postBody: Object) {
+async function createAttachmentForTask(postBody: any) {
   try {
     const restOperation = post({
       apiName: 'goldenRestApi',
@@ -134,7 +136,7 @@ async function createAttachmentForTask(postBody: Object) {
 
     const response = await restOperation.response;
     console.log('POST call succeeded: ', response);
-  } catch (error) {
+  } catch (error:any) {
     console.log('POST call failed: ', JSON.parse(error.response.body));
   }
 }
@@ -142,13 +144,16 @@ async function createAttachmentForTask(postBody: Object) {
 // const file = document.getElementById("file");
 // const upload = document.getElementById("upload");
 
+
+
 // upload.addEventListener("click", () => {
-async function uploadFile(todoId) {
+async function uploadFile(todoId: string) {
+  // let file: any;
   const fileReader = new FileReader();
   fileReader.readAsArrayBuffer(file.files[0]);
   const imagePath = "picture-submissions/" + file.files[0].name
 
-  fileReader.onload = async (event) => {
+  fileReader.onload = async (event: any) => {
     console.log("Complete File read successfully!", event.target.result);
     try {
       await uploadData({
@@ -174,13 +179,13 @@ async function uploadFile(todoId) {
     <ul>
       <li 
         v-for="todo in todos" 
-        :key="todo.id"
+        :key="todo.id!"
       >
         {{ todo.id }} - {{ todo.content }}
-        <button @click="createComment(todo.id)">+ new comment</button>
-        <button @click="deleteTodo(todo.id)">- del</button>
-        <button @click="showCommentsV2(todo.id)">comments</button>
-        <button @click="showPhotoAttachmentsV2(todo.id)">photo attachments</button>
+        <button @click="createComment(todo.id!)">+ new comment</button>
+        <button @click="deleteTodo(todo.id!)">- del</button>
+        <button @click="showCommentsV2(todo.id!)">comments</button>
+        <button @click="showPhotoAttachmentsV2(todo.id!)">photo attachments</button>
 
         
         <div class="">
@@ -188,7 +193,7 @@ async function uploadFile(todoId) {
             type="file"
             id="file"
           />
-          <button id="upload" @click="uploadFile(todo.id)">Upload File</button>
+          <button id="upload" @click="uploadFile(todo.id!)">Upload File</button>
       </div>
       </li>
     </ul>

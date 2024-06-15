@@ -7,6 +7,7 @@ import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { storage } from './storage/resource';
 import { Table, AttributeType } from "aws-cdk-lib/aws-dynamodb"
 import { StringParameter } from "aws-cdk-lib/aws-ssm"
+import * as iam from "aws-cdk-lib/aws-iam"
 
 import {
   AuthorizationType,
@@ -33,6 +34,7 @@ const apiStack = backend.createStack("api-stack");
 
 
 const table = new Table(apiStack, 'AttachmentTable12345', {
+  tableName: 'AttachmentTable12345',
   partitionKey: {
     name: 'id',
     type: AttributeType.STRING,
@@ -43,6 +45,14 @@ const lambdaFunction = backend.sayHello.resources.lambda as Function;
 lambdaFunction.addEnvironment('DYNAMODB_TABLE_NAME_MASTER', 'AttachmentTable12345');
 
 
+const statement = new iam.PolicyStatement({
+  sid: "AllowAllDynamo",
+  actions: ["dynamodb:*"],
+  resources: ["*"],
+})
+
+
+lambdaFunction.addToRolePolicy(statement)
 
 
 
@@ -115,6 +125,8 @@ const apiRestPolicy = new Policy(apiStack, "RestApiPolicy", {
     }),
   ],
 });
+
+
 
 // attach the policy to the authenticated and unauthenticated IAM roles
 backend.auth.resources.authenticatedUserIamRole.attachInlinePolicy(

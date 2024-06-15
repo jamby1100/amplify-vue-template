@@ -8,7 +8,7 @@
 
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import { DynamoDBClient, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
-import { env } from '$amplify/env/say-hello';
+import { env } from '$amplify/env/show-attachments-of-todo-task';
 import { SuccessHelper } from '../../helpers/response_helper'
 import { DynamodbQuery } from '../../gateways/dynamodb_gateway'
 

@@ -7,7 +7,7 @@
 // };
 
 import type { APIGatewayProxyHandler } from "aws-lambda";
-import { env } from '$amplify/env/say-hello';
+import { env } from '$amplify/env/add-attachment-to-todo-task';
 import { SuccessHelper } from '../../helpers/response_helper'
 import { DynamodbWrite } from '../../gateways/dynamodb_gateway'
 

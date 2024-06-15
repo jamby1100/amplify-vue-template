@@ -1,13 +1,13 @@
 import { defineBackend } from '@aws-amplify/backend';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
-import { sayHello } from './functions/say-hello/resource';
 import { Stack } from "aws-cdk-lib";
 import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { storage } from './storage/resource';
 import { Table, AttributeType } from "aws-cdk-lib/aws-dynamodb"
 import { StringParameter } from "aws-cdk-lib/aws-ssm"
 import * as iam from "aws-cdk-lib/aws-iam"
+import { addAttachmentToTodoTask, showAttachmentsForTodoTask } from './functions/resource'
 
 import {
   AuthorizationType,
@@ -23,7 +23,8 @@ import { Function } from 'aws-cdk-lib/aws-lambda';
 const backend = defineBackend({
   auth,
   data,
-  sayHello,
+  addAttachmentToTodoTask,
+  showAttachmentsForTodoTask,
   storage
 });
 
@@ -31,30 +32,6 @@ const backend = defineBackend({
 
 // create a new API stack
 const apiStack = backend.createStack("api-stack");
-
-
-const table = new Table(apiStack, 'AttachmentTable12345', {
-  tableName: 'AttachmentTable12345',
-  partitionKey: {
-    name: 'id',
-    type: AttributeType.STRING,
-  }
-});
-
-const lambdaFunction = backend.sayHello.resources.lambda as Function;
-lambdaFunction.addEnvironment('DYNAMODB_TABLE_NAME_MASTER', 'AttachmentTable12345');
-
-
-const statement = new iam.PolicyStatement({
-  sid: "AllowAllDynamo",
-  actions: ["dynamodb:*"],
-  resources: ["*"],
-})
-
-
-lambdaFunction.addToRolePolicy(statement)
-
-
 
 // create a new REST API
 const myRestApi = new RestApi(apiStack, "RestApi", {
@@ -70,15 +47,45 @@ const myRestApi = new RestApi(apiStack, "RestApi", {
   },
 });
 
-// create a new Lambda integration
-const lambdaIntegration = new LambdaIntegration(
-  backend.sayHello.resources.lambda
-);
+const tableName = 'AttachmentTable787max'
+const table = new Table(apiStack, tableName, {
+  tableName: tableName,
+  partitionKey: {
+    name: 'todoId',
+    type: AttributeType.STRING,
+  },
+  sortKey: {
+    name: 'imagePath',
+    type: AttributeType.STRING
+  }
+});
 
+const lambda_functions = [
+  {
+    "function": backend.addAttachmentToTodoTask.resources.lambda as Function,
+    "name": "addAttachmentToTodoTask"
+  },
+  {
+    "function": backend.showAttachmentsForTodoTask.resources.lambda as Function,
+    "name": "showAttachmentsForTodoTask"
+  }
+]
 
-// const param = new StringParameter(apiStack, 'param1', {parameterName: "ATTACHMENTS_TABLE", stringValue: "AttachmentTable12345"})
-// backend.sayHello.resources.cfnResources.cfnFunction.addOverride("Environment.ATTACHMENTS_TABLE","SomeHeart")
+const statement = new iam.PolicyStatement({
+  sid: "AllowAllDynamo",
+  actions: ["dynamodb:*"],
+  resources: ["*"],
+})
 
+let lambdaIntegrationsMap:any = {}
+
+for (var index in lambda_functions) {
+  let currlambdaFunction = lambda_functions[index];
+  currlambdaFunction["function"].addEnvironment('DYNAMODB_TABLE_NAME_MASTER', tableName);
+  currlambdaFunction["function"].addToRolePolicy(statement)
+
+  lambdaIntegrationsMap[currlambdaFunction["name"]] = new LambdaIntegration(currlambdaFunction["function"]);
+}
 
 
 // create a new resource path with IAM authorization
@@ -89,16 +96,10 @@ const itemsPath = myRestApi.root.addResource("items", {
 });
 
 // add methods you would like to create to the resource path
-itemsPath.addMethod("GET", lambdaIntegration);
-itemsPath.addMethod("POST", lambdaIntegration);
-itemsPath.addMethod("DELETE", lambdaIntegration);
-itemsPath.addMethod("PUT", lambdaIntegration);
+itemsPath.addMethod("POST", lambdaIntegrationsMap["addAttachmentToTodoTask"]);
 
-// add a proxy resource path to the API
-itemsPath.addProxy({
-  anyMethod: true,
-  defaultIntegration: lambdaIntegration,
-});
+const itemPathWithId = itemsPath.addResource('{item}');
+itemPathWithId.addMethod('GET', lambdaIntegrationsMap["showAttachmentsForTodoTask"]);   // GET /items/{item}
 
 // create a new Cognito User Pools authorizer
 const cognitoAuth = new CognitoUserPoolsAuthorizer(apiStack, "CognitoAuth", {
@@ -107,7 +108,7 @@ const cognitoAuth = new CognitoUserPoolsAuthorizer(apiStack, "CognitoAuth", {
 
 // create a new resource path with Cognito authorization
 const booksPath = myRestApi.root.addResource("cognito-auth-path");
-booksPath.addMethod("GET", lambdaIntegration, {
+booksPath.addMethod("GET", lambdaIntegrationsMap["showAttachmentsForTodoTask"], {
   authorizationType: AuthorizationType.COGNITO,
   authorizer: cognitoAuth,
 });

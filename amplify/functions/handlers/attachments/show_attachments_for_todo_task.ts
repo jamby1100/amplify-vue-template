@@ -9,25 +9,26 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
 import { DynamoDBClient, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { env } from '$amplify/env/say-hello';
+import { SuccessHelper } from '../../helpers/response_helper'
+import { DynamodbQuery } from '../../gateways/dynamodb_gateway'
 
-let dynamoClient = new DynamoDBClient({ region: process.env.REGION });
 let tableName = env.DYNAMODB_TABLE_NAME_MASTER;
+
+interface EventBody {
+  todoId: string
+}
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   console.log("event", event);
+  console.log("and the event body is")
 
-  let item = {
-    id: {
-      S: "some"
-    }
-  }
+  let itemId:string = event.pathParameters!.item || ""
 
-  const command = new PutItemCommand({
-    TableName: tableName,
-    Item: item
-  })
+  console.log("and the item id is")
+  console.log(itemId)
 
-  const response = await dynamoClient.send(command);
+  let response = await DynamodbQuery(tableName, itemId)
+
   console.log("this is the result")
   console.log('RESPONSE:');
 
@@ -35,14 +36,5 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   console.log("ENV")
   console.log(JSON.stringify(tableName))
 
-  return {
-    statusCode: 200,
-    // Modify the CORS settings below to match your specific requirements
-    headers: {
-      "Access-Control-Allow-Origin": "*", // Restrict this to domains you trust
-      "Access-Control-Allow-Headers": "*", // Specify only the headers you need to allow
-    },
-    body: JSON.stringify(`Hello from the other side! ${tableName}`),
-
-  };
+  return SuccessHelper({"data": response.Items});
 };

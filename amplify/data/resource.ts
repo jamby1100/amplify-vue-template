@@ -24,7 +24,7 @@ const schema = a.schema({
       likesCount: a.integer()
     })
     .secondaryIndexes((index) => [index("todo_parent_id")])
-    .authorization(allow => [allow.owner()]),
+    .authorization(allow => [allow.owner(), allow.group('ADMINS')]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

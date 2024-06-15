@@ -3,8 +3,9 @@ import '@/assets/main.css';
 import { onMounted, ref } from 'vue';
 import type { Schema } from '../../amplify/data/resource';
 import { generateClient } from 'aws-amplify/data';
-import { post } from 'aws-amplify/api';
+import { post, get } from 'aws-amplify/api';
 import { uploadData } from "aws-amplify/storage";
+import { getUrl } from 'aws-amplify/storage';
 
 // import { todo } from 'node:test';
 
@@ -49,6 +50,43 @@ async function showCommentsV2(todoId: string) {
     console.log("AFTER DATA IS")
     console.log(commentData)
   })
+}
+
+let photoAttachmentData:any = ref([])
+const currentIdForPhotoAttachment = ref("")
+
+async function showPhotoAttachmentsV2(todoId: string) {
+  currentIdForPhotoAttachment.value = todoId; 
+  const restOperation = get({
+      apiName: 'goldenRestApi',
+      path: `items/${todoId}`,
+  });
+
+  const response = await restOperation.response;
+  // photoAttachmentData.value = await response.body.json();
+  let photoAttachmentsForTodo:any = await response.body.json();
+  console.log("AND THE MASTER RESPONSE IS")
+  console.log(photoAttachmentsForTodo.data)
+
+  let imageArr = []
+  
+  for (var indx in photoAttachmentsForTodo.data) {
+    let item = photoAttachmentsForTodo.data[indx]
+    console.log("looping")
+    console.log(item.imagePath)
+    const linkToStorageFile = await getUrl({
+      path: item.imagePath.S,
+      options: {
+        validateObjectExistence: false,  // defaults to false
+        expiresIn: 20, // validity of the URL, in seconds. defaults to 900 (15 minutes) and maxes at 3600 (1 hour)
+        useAccelerateEndpoint: false // Whether to use accelerate endpoint.
+      },
+    });
+    console.log(linkToStorageFile.url.toString())
+    imageArr.push(linkToStorageFile.url.toString())
+  }
+
+  photoAttachmentData.value = imageArr
 }
 
 
@@ -142,7 +180,9 @@ async function uploadFile(todoId) {
         <button @click="createComment(todo.id)">+ new comment</button>
         <button @click="deleteTodo(todo.id)">- del</button>
         <button @click="showCommentsV2(todo.id)">comments</button>
+        <button @click="showPhotoAttachmentsV2(todo.id)">photo attachments</button>
 
+        
         <div class="">
           <input
             type="file"
@@ -161,7 +201,14 @@ async function uploadFile(todoId) {
       </li>
     </ul>
 
+    <h1>Photo Attachments for {{ currentIdForPhotoAttachment }}</h1>
 
+    <ul v-if="photoAttachmentData != null">
+      <li v-for="photoAttachment in photoAttachmentData">
+        <img v-bind:src="photoAttachment" alt="Italian Trulli" height="200">
+
+      </li>
+    </ul>
 
     <div>
       🥳 App successfully hosted. Try creating a new todo.
@@ -169,6 +216,8 @@ async function uploadFile(todoId) {
       <a href="https://docs.amplify.aws/gen2/start/quickstart/nextjs-pages-router/">
         Review next steps of this tutorial.
       </a>
+
+      
   
     </div>
 
